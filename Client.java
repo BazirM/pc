@@ -29,6 +29,18 @@ public class Client {
         }
     }
     
+    public void close_account(String user, String pass){
+        try{  
+            System.out.println("user: " + user + "; pass: " + pass);
+            PrintWriter out = new PrintWriter(sock.getOutputStream());
+            out.println("\\close_account " + user + " " + pass);
+            out.flush();
+        }
+         catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
     public void login(String user, String pass){
       try{
         PrintWriter out = new PrintWriter(sock.getOutputStream());

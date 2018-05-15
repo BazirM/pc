@@ -92,7 +92,7 @@ management(Users,Onlines) ->
 				_ -> management(Users,Onlines)
 			end;
 		{online,From} ->
-			From ! {?MODULE,[Username|| {Username,{_,true}} <- maps:to_list(Users)], Onlines},
+			From ! {?MODULE,[Username || {Username,{_,true}} <- maps:to_list(Users)], Onlines},
 			management(Users, Onlines);
 		
 		{logged,From,Socket} ->

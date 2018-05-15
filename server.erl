@@ -9,8 +9,10 @@ server(Port) ->
 	state:start(), %inicia o state
 	Command = spawn(fun() -> commands() end),
 	Room = spawn(fun() -> room([]) end),
+	spawn(fun() -> update_monsters() end),
 	{ok,LSock} = gen_tcp:listen(Port,[binary, {packet, line}, {reuseaddr, true}]),
 	register(?MODULE,Command),
+	?MODULE ! {generate_monsters},
 	acceptor(LSock,Room).
 
 acceptor(LSock,Room) ->
@@ -64,6 +66,16 @@ user(Sock, Room) ->
               _ -> gen_tcp:send(Socket,<<"user_exists\n">>)
             end;
 
+	  "\\close_account " ++ Dados ->
+            St = string:tokens(Dados, " "),
+            [U | P] = St,
+            io:format("user ~p ~n", [U]),
+            io:format("pass ~p ~n", [P]),
+            case loginmanager:close_account(U, P, Socket) of
+              ok -> gen_tcp:send(Socket,<<"ok_close_account\n">>);
+              _ -> gen_tcp:send(Socket,<<"user_not_exists\n">>)
+            end;
+
             _ -> invalid
            end,
            
@@ -107,6 +119,13 @@ user(Sock, Room) ->
               Room ! {line,Data,Socket},
               userauthenticated(Sock,Room);
 
+              "\\front\n" ->
+              Username = logged(Socket),
+              io:format("Fez front ~n"),
+              ?MODULE ! {front,Username},
+              Room ! {line,Data,Socket},
+              userauthenticated(Sock,Room);
+
             _ ->
         	%Room ! {line, Data,Socket}, não é necessário?
         	userauthenticated(Sock, Room)
@@ -117,23 +136,37 @@ user(Sock, Room) ->
             Room ! {leave, self()}
     end.
 
+    update_monsters() ->
+    timer:send_after(10,state,{monsters_upt,self()}),
+    receive
+      {repeat} ->
+        	update_monsters()
+    end.
+
    	commands() ->
    		receive
    			{online,add,Username} ->
-        io:format("Entrei no commands: add ~p ~n", [Username]),
-   			state ! {online,add,Username},
+        		io:format("Entrei no commands: add ~p ~n", [Username]),
+   				state ! {online,add,Username},
    				commands();
    			{left,Username} ->
-        io:format("Entrei no commands: left ~p ~n", [Username]),
+        		io:format("Entrei no commands: left ~p ~n", [Username]),
    				state ! {left,Username},
    				commands();
-        {right,Username} ->
-        io:format("Entrei no commands: right ~p ~n", [Username]),
-          state ! {right,Username},
-          commands();
+        	{right,Username} ->
+        		io:format("Entrei no commands: right ~p ~n", [Username]),
+          		state ! {right,Username},
+          		commands();
+          	{front,Username} ->
+        		io:format("Entrei no commands: front ~p ~n", [Username]),
+          		state ! {front,Username},
+          		commands();
    			{Socket,U} ->
-        io:format("Entrei no commands: Socket ~p, Username ~p ~n", [Socket,U]),
+        		io:format("Entrei no commands: Socket ~p, Username ~p ~n", [Socket,U]),
    				state ! {time,Socket,U},
+   				commands();
+   			{generate_monsters} ->
+   				state ! {generate_monsters},
    				commands()
    		end.
 
