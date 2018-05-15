@@ -80,7 +80,7 @@ void setup() {
           }
           catch(Exception e){
             connectFailure = true;
-            state = login_window; // estava start window -> nao pode pq supostamente falha
+            state = start_window; 
           };
        }
      });
