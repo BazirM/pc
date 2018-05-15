@@ -137,7 +137,7 @@ user(Sock, Room) ->
     end.
 
     update_monsters() ->
-    timer:send_after(10,state,{monsters_upt,self()}),
+    timer:send_after(80,state,{monsters_upt,self()}),
     receive
       {repeat} ->
         	update_monsters()
