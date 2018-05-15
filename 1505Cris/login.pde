@@ -218,7 +218,7 @@ void showStart(){
   cp5.getController("START").show();
   
    if(connectFailure==true){
-      showMessageDialog(null,"Notice: Connection failure!", "Alert", ERROR_MESSAGE);
+      showMessageDialog(null,"Connection failure!", "Alert", ERROR_MESSAGE);
       connectFailure = false;
   }
 }
