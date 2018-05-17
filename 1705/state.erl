@@ -22,7 +22,7 @@ statelogin(Online,Socket,GreenMonsters,RedMonsters) ->
   	GM ->
   		[gen_tcp:send(Socket,list_to_binary("add_green_monster " ++ integer_to_list(I) ++ " " ++ integer_to_list(Speed) ++ " " ++ float_to_list(X) 
                 ++ " " ++ float_to_list(Y) ++ " " ++ float_to_list(H) ++ " " ++ float_to_list(W) ++ " " ++ integer_to_list(Type) ++ "\n"))
-                 || {I,{Speed,X,Y,H,W,Type}} <- GM]
+                 || {I,{Speed,X,Y,H,W,DirX,DirY,Type}} <- GM]
     end,
 
   case maps:to_list(RedMonsters) of
@@ -30,7 +30,7 @@ statelogin(Online,Socket,GreenMonsters,RedMonsters) ->
   	RM ->
   		[gen_tcp:send(Socket,list_to_binary("add_red_monster " ++ integer_to_list(I) ++ " " ++ integer_to_list(Speed) ++ " " ++ float_to_list(X) 
                 ++ " " ++ float_to_list(Y) ++ " " ++ float_to_list(H) ++ " " ++ float_to_list(W) ++ " " ++ integer_to_list(Type) ++ "\n"))
-                 || {I,{Speed,X,Y,H,W,Type}} <- RM]
+                 || {I,{Speed,X,Y,H,W,DirX,DirY,Type}} <- RM]
     end.
 %Online #{Username => Avatar = ({Speed,Dir,X,Y,H,W})}
 % GreenMonsters #{I => Monster = ({Speed,X,Y,H,W,Type})}
@@ -105,41 +105,33 @@ state(Online,Socket,GreenMonsters,RedMonsters) ->
 				state(Online,Socket,GM2,RedMonsters);
 
 		{red_create, From} ->
-			{Speed, X, Y, H, W, Type} = generate_red_monsters(),
+			{Speed, X, Y, H, W,DirX,DirY, Type} = generate_red_monsters(),
 			Id = maps:size(RedMonsters)+1,
 			io:format("ID incrementado: ~p ~n",[Id]),
 			Data = "add_red_monster " ++ integer_to_list(Id) ++ " " ++ integer_to_list(Speed) ++ " " ++ float_to_list(X) 
                 ++ " " ++ float_to_list(Y) ++ " " ++ float_to_list(H) ++ " " ++ float_to_list(W) ++ " " ++ integer_to_list(Type) ++ "\n",
                 [gen_tcp:send(Sock,list_to_binary(Data)) || Sock <- Socket],
-			RM = maps:put(Id,{Speed, X, Y, H, W, Type},RedMonsters),
+			RM = maps:put(Id,{Speed, X, Y, H, W,DirX,DirY, Type},RedMonsters),
 			state(Online,Socket,GreenMonsters,RM);
 		
 		{monsters_upt, From} ->
 			  GreenM = maps:to_list(GreenMonsters),
               [gen_tcp:send(Sock,list_to_binary("green_monster_upt " ++ integer_to_list(I) ++ " " ++ float_to_list(X) ++ " " 
-                ++ float_to_list(Y) ++ " " ++ integer_to_list(Type) ++ "\n")) || Sock <- Socket, {I,{Speed,X,Y,H,W,Type}} <- GreenM],
+                ++ float_to_list(Y) ++ " " ++ integer_to_list(Type) ++ "\n")) || Sock <- Socket, {I,{Speed,X,Y,H,W,DirX,DirY,Type}} <- GreenM],
               RedM = maps:to_list(RedMonsters),
               [gen_tcp:send(Sock,list_to_binary("red_monster_upt " ++ integer_to_list(I) ++ " " ++ float_to_list(X) ++ " " 
-                ++ float_to_list(Y) ++ " " ++ integer_to_list(Type) ++ "\n")) || Sock <- Socket, {I,{Speed,X,Y,H,W,Type}} <- RedM],
+                ++ float_to_list(Y) ++ " " ++ integer_to_list(Type) ++ "\n")) || Sock <- Socket, {I,{Speed,X,Y,H,W,DirX,DirY,Type}} <- RedM],
 
+              NewGreenMonsters = check_collision_wall_monsters(maps:to_list(GreenMonsters),GreenMonsters,maps:size(GreenMonsters)),
+              NewRedMonsters = check_collision_wall_monsters(maps:to_list(RedMonsters),RedMonsters,maps:size(RedMonsters)),
+              %{Speed,X,Y,H,W,Type} = maps:get(0,GreenMonsters),
+              %{Speed2,X2,Y2,H2,W2,Type} = maps:get(1,GreenMonsters),
+              %Green_Updated = maps:update(0,{Speed,X+0.5,Y+0.5,H,W,Type},GreenMonsters),
+              %Green_Updated2 = maps:update(1,{Speed2,X2+0.7,Y2+0.7,H2,W2,Type},Green_Updated),
+              %RedMonsters2 = update_allRed(maps:to_list(RedMonsters),RedMonsters,maps:size(RedMonsters)),
               
-              {Speed,X,Y,H,W,Type} = maps:get(0,GreenMonsters),
-              {Speed2,X2,Y2,H2,W2,Type} = maps:get(1,GreenMonsters),
-              Green_Updated = maps:update(0,{Speed,X+0.5,Y+0.5,H,W,Type},GreenMonsters),
-              Green_Updated2 = maps:update(1,{Speed2,X2+0.7,Y2+0.7,H2,W2,Type},Green_Updated),
-              %[maps:update(Id,{Speed3,X3+rand:uniform(),Y3+rand:uniform(),H3,W3,Type3},RedMonsters) || {Id,{Speed3,X3,Y3,H3,W3,Type3}} <- RedMonsters],
-              %UpdtRedMonster = fun(Key, Val, AccIn) -> {Speed3, X3, Y3, H3, W3, Type3} = Val,
-              %												Val2 = {Speed3,X3+rand:uniform()+0.0,Y3+rand:uniform()+0.0,H3,W3,Type3},
-              %												maps:put(Key, Val2, AccIn),
-              %												io:format("Valores atualizados: ID: ~p Valores: ~p ~n",[Key,Val2])
-%
-              	%										end,
-
-              RedMonsters2 = update_allRed(maps:to_list(RedMonsters),RedMonsters,maps:size(RedMonsters)),
-              %maps:fold(UpdtRedMonster, RedMonsters2, RedMonsters),
-              %[io:format("~w ~n",[{NI,{NSpeed,NX,NY,NH,NW,NType}}]) || {NI, {NSpeed,NX,NY,NH,NW,NType}} <- maps:to_list(RedMonsters2)],
               From ! {repeat},
-              state(Online,Socket,Green_Updated2,RedMonsters2) 
+              state(Online,Socket,NewGreenMonsters,NewRedMonsters) 
 		end.
 
 create_red_monster() ->
@@ -157,12 +149,25 @@ notify_red(Red) ->
 	end.
 
 
-update_allRed(L,RedMonsters,N) when N > 0 ->
-	[Head|T] = L,
-	io:format("~p ~n",[Head]),
-	{Id,{Speed,X,Y,H,W,Type}} = Head,
+%update_allRed(L,RedMonsters,N) when N > 0 ->
+%	[Head|T] = L,
+%	io:format("~p ~n",[Head]),
+%	{Id,{Speed,X,Y,H,W,Type}} = Head,
 	%GM = maps:update(Id,{Speed,X+rand:uniform()+0.0,Y+rand:uniform()+0.0,H,W,Type},RedMonsters),
-	GM = maps:update(Id,{Speed,X+Speed,Y+Speed,H,W,Type},RedMonsters),
-	update_allRed(T,GM,N-1);
-update_allRed(_,GM,0) -> 
-	GM.
+%	GM = maps:update(Id,{Speed,X+Speed,Y+Speed,H,W,Type},RedMonsters),
+%	update_allRed(T,GM,N-1);
+%update_allRed(_,GM,0) -> 
+%	GM.
+
+check_collision_wall_monsters(ListMonster,Monsters,N) when N > 0 ->
+	[Head|T] = ListMonster,
+	{Id,{Speed,X,Y,H,W,DirX,DirY,Type}} = Head,
+	if X > 1024-(W/2) ; X < W/2 ->
+		check_collision_wall_monsters(T,maps:update(Id,{Speed,X+(Speed*(-DirX)),Y,H,W,-DirX,DirY,Type},Monsters),N-1);
+	Y > 700-(H/2) ; Y < H/2 ->
+		check_collision_wall_monsters(T,maps:update(Id,{Speed,X,Y+(Speed*(-DirY)),H,W,DirX,-DirY,Type},Monsters),N-1);
+	true ->
+		check_collision_wall_monsters(T,maps:update(Id,{Speed,X+(Speed*(DirX)),Y+(Speed*(DirY)),H,W,DirX,DirY,Type},Monsters),N-1)
+	end;
+check_collision_wall_monsters(_,Monsters,0) ->
+	Monsters.

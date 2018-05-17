@@ -311,11 +311,6 @@ void showGame(){
     }
     popMatrix();
     
-    float x_CSE = 40;
-  float y_CIE = height-60;
-  float x_CSD = width;
-  float y_CID = height-60;
-    
     color(0,0,0);
     if(!(names[i]==null)){
       String PlayerName = "Nickname:";
@@ -335,6 +330,7 @@ void showGame(){
 
 void keyPressed() {
   //enviar("keyPress",Integer.toString(keyCode));
+  System.out.println(" keycode: "+keyCode);
   if(state==game_window){
   if (keyCode == LEFT) {
     //av.leftBoolean = true;
