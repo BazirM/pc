@@ -36,6 +36,7 @@ statelogin(Online,Socket,GreenMonsters,RedMonsters) ->
 % GreenMonsters #{I => Monster = ({Speed,X,Y,H,W,Type})}
 % RedMonsters
 state(Online,Socket,GreenMonsters,RedMonsters) ->
+	io:format("Estou no state ~n"),
 	receive
 		{online, add, Username} ->
 			{Speed, Dir, X, Y, H, W,Fe} = generateAvatar(),
@@ -125,12 +126,6 @@ state(Online,Socket,GreenMonsters,RedMonsters) ->
 			state(Online,Socket,GreenMonsters,RM);
 		
 		{monsters_upt, From} ->
-			  %GreenM = maps:to_list(GreenMonsters),
-              %[gen_tcp:send(Sock,list_to_binary("green_monster_upt " ++ integer_to_list(I) ++ " " ++ float_to_list(X) ++ " " 
-               % ++ float_to_list(Y) ++ " " ++ integer_to_list(Type) ++ "\n")) || Sock <- Socket, {I,{Speed,X,Y,H,W,DirX,DirY,Type}} <- GreenM],
-              %RedM = maps:to_list(RedMonsters),
-              %[gen_tcp:send(Sock,list_to_binary("red_monster_upt " ++ integer_to_list(I) ++ " " ++ float_to_list(X) ++ " " 
-              %  ++ float_to_list(Y) ++ " " ++ integer_to_list(Type) ++ "\n")) || Sock <- Socket, {I,{Speed,X,Y,H,W,DirX,DirY,Type}} <- RedM],
 
               %check_boundaries_monsters testa a colisão com as paredes do jogo.
               
@@ -176,9 +171,11 @@ state(Online,Socket,GreenMonsters,RedMonsters) ->
               					end;
             
               		{game_over,Username} ->
+              		io:format("Game_OVER Red Monster!~n"),
               					Message = "game_over " ++ Username ++ "\n",
               					[gen_tcp:send(Sock,list_to_binary(Message)) || Sock <- Socket],
               					%Online,Socket,GreenMonsters,RedMonsters
+              					From ! {repeat},
               					state(#{},[],GreenMonsters,#{})
               end
 
