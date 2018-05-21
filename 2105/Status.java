@@ -10,11 +10,13 @@ public class Status{
     private Map<Integer,Monster> redmonsters;
     private Map<Integer,Monster> greenmonsters;
     private Lock l = new ReentrantLock();
+    boolean game_over = false;
     
     Status(){
       online = new LinkedHashMap<>();
       redmonsters = new HashMap<>();
       greenmonsters = new HashMap<>();
+      boolean game_over = false;
     }
     
     public void addMonster(int i, Monster m){
@@ -29,6 +31,28 @@ public class Status{
       finally{
         l.unlock();
       } 
+    }
+    
+    
+    
+    public void clearGame(){
+      l.lock();
+      try{
+           redmonsters = new HashMap<>();
+           online = new LinkedHashMap<>();
+      }
+      finally{ l.unlock();}
+    }
+
+    
+    public void removeMonster(int i){
+      l.lock();
+      try{
+        greenmonsters.remove(i);
+      }
+      finally{
+        l.unlock();
+      }
     }
     
     public void addPlayer(Player p, Avatar a){
@@ -115,7 +139,7 @@ public class Status{
           components[i][4] = atb[4];
           components[i][5] = atb[5];
           components[i][6] = atb[6];
-          components[i][7] = atb[7];          
+          components[i][7] = atb[7]; 
           i++;
         }
       }finally {
@@ -159,6 +183,7 @@ public class Status{
       }  
     }
     
+    
     public void updateDirection(String username,double dir,double energy, String e){
       l.lock();
       
@@ -178,6 +203,24 @@ public class Status{
             break;
           }
         
+      }finally{
+        l.unlock();
+      }
+    }
+    
+    public void chargeEnergy(String username, double energy){
+      l.lock();
+      try{
+        Avatar a = null;
+        for (Map.Entry<Player,Avatar> entry : online.entrySet()){
+          if(entry.getKey().getUsername().equals(username)){
+            a = entry.getValue();
+            a.updateFrontEnergy(energy);
+            a.updateLeftEnergy(energy);
+            a.updateRigthEnergy(energy);
+            break;
+          }
+        }
       }finally{
         l.unlock();
       }

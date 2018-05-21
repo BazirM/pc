@@ -7,7 +7,7 @@ public class Avatar {
   double dir; //angle
   double x,y;
   double h,w;
-  double fe, le, re; //front energy
+  double fe, le, re; //front energy ; left energy ; rigth energy
 
 
 Avatar(double speed, double dir, double x, double y, double h, double w, double fe, double le, double re) {
@@ -35,14 +35,13 @@ Avatar(double speed, double dir, double x, double y, double h, double w, double 
    this.fe = fe;
  }
 
- public void updateLeftEnergy(double le){
- 	this.le = le;
- }
+public void updateLeftEnergy(double le){
+	this.le = le;
+}
 
- public void updateRigthEnergy(double re){
- 	this.re = re;
- }
-
+public void updateRigthEnergy(double re){
+	this.re = re;
+}
 public double[] getAtributes(){
       double[] atrib = {x,y,h,w,dir,fe,le,re};
       return atrib;

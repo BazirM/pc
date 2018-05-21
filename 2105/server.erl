@@ -100,7 +100,7 @@ user(Sock, Room) ->
             St = string:tokens(Dados, " "),
             [U | P] = St,
             case loginmanager:logout(U, P, Socket) of
-              ok -> gen_tcp:send(Socket,<<"ok_logout\n">>),
+              ok -> %gen_tcp:send(Socket,<<"ok_logout\n">>),
                   Room ! {leave,Sock}, user(Sock,Room);
               _ -> userauthenticated(Sock,Room)
             end;

@@ -33,6 +33,11 @@ public class Message extends Thread {
               st.addMonster(i,m);
             }
             
+            if(token[0].equals("remove_green_monster")){
+              int i = Integer.parseInt(token[1]);
+              st.removeMonster(i);
+            }
+            
             if(token[0].equals("add_red_monster")){
               int i = Integer.parseInt(token[1]);
               Monster m = new Monster(Double.parseDouble(token[2]),Double.parseDouble(token[3]),Double.parseDouble(token[4]),Double.parseDouble(token[5]),
@@ -67,6 +72,16 @@ public class Message extends Thread {
               st.updatePosition(token[1],Double.parseDouble(token[2]),Double.parseDouble(token[3]),Double.parseDouble(token[4]));
             }
             
+            if(token[0].equals("game_over")) {
+                st.game_over = true;
+                st.clearGame();
+                //state = login_window;
+               }
+               
+             if(token[0].equals("charge")){
+               //Username, Value of Energy(100)
+               st.chargeEnergy(token[1],Double.parseDouble(token[2]));
+             }
             }
         }
         catch(Exception e){

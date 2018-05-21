@@ -15,6 +15,9 @@ boolean create_accountFailure = false;
 boolean loginFailure = false;
 boolean close_accountFailure = false;
 
+//variavel que informa que acabou o jogo
+boolean game_over = false;
+
 String textValue = "";
 Textfield myTextfield;
 int space;
@@ -205,6 +208,10 @@ void draw() {
       break;
     case game_window:
       showGame();
+      if(st.game_over){
+        showMessageDialog(null,"Game over!", "Alert", ERROR_MESSAGE);
+        st.game_over = false;
+      }
       break;
   }
 }
@@ -323,9 +330,9 @@ void showGame(){
         textSize(25);
         text(FrontEnergy,180-textWidth(FrontEnergy),space+25);
         textSize(25);
-        text(RigthEnergy,180-textWidth(RigthEnergy),space+75);
+        text(RigthEnergy,180-textWidth(RigthEnergy),space+50);
         textSize(25);
-        text(LeftEnergy,180-textWidth(LeftEnergy),space+50);
+        text(LeftEnergy,180-textWidth(LeftEnergy),space+75);
         textSize(25);
         text(names[i],145,space);
         space+=25;
@@ -345,6 +352,7 @@ void showGame(){
 
 void keyPressed() {
   //enviar("keyPress",Integer.toString(keyCode));
+  System.out.println(" keycode: "+keyCode);
   if(state==game_window){
   if (keyCode == LEFT) {
     //av.leftBoolean = true;
