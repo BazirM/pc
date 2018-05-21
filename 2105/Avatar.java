@@ -36,11 +36,11 @@ Avatar(double speed, double dir, double x, double y, double h, double w, double 
  }
 
 public void updateLeftEnergy(double le){
-	this.le = le;
+  this.le = le;
 }
 
-public void updateRigthEnergy(double re){
-	this.re = re;
+public void updateRightEnergy(double re){
+  this.re = re;
 }
 public double[] getAtributes(){
       double[] atrib = {x,y,h,w,dir,fe,le,re};

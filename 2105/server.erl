@@ -10,8 +10,10 @@ server(Port) ->
   Command = spawn(fun() -> commands() end),
   Room = spawn(fun() -> room([]) end),
   spawn(fun() -> update_monsters() end),
+  Charge = spawn(fun() -> charge_energy() end),
   {ok,LSock} = gen_tcp:listen(Port,[binary, {packet, line}, {reuseaddr, true}]),
   register(?MODULE,Command),
+  register(charge,Charge),
   ?MODULE ! {generate_monsters},
   acceptor(LSock,Room).
 
@@ -100,7 +102,7 @@ user(Sock, Room) ->
             St = string:tokens(Dados, " "),
             [U | P] = St,
             case loginmanager:logout(U, P, Socket) of
-              ok -> %gen_tcp:send(Socket,<<"ok_logout\n">>),
+              ok -> gen_tcp:send(Socket,<<"ok_logout\n">>),
                   Room ! {leave,Sock}, user(Sock,Room);
               _ -> userauthenticated(Sock,Room)
             end;
@@ -152,6 +154,7 @@ user(Sock, Room) ->
         {left,Username} ->
             io:format("Entrei no commands: left ~p ~n", [Username]),
           state ! {left,Username},
+
           commands();
           {right,Username} ->
             io:format("Entrei no commands: right ~p ~n", [Username]),
@@ -169,3 +172,18 @@ user(Sock, Room) ->
           state ! {generate_monsters},
           commands()
       end.
+
+      charge_energy() ->
+        receive
+         {front_energy,Username} -> 
+            timer:send_after(4000,state,{autocharge,Username,"Fe"}),
+            charge_energy();
+         {left_energy,Username} ->
+            timer:send_after(4000,state,{autocharge,Username,"Le"}),
+            charge_energy();
+         {right_energy,Username} ->
+            timer:send_after(4000,state,{autocharge,Username,"Re"}),
+            charge_energy()
+        end.
+
+    

@@ -197,7 +197,7 @@ public class Status{
             if(e.equals("l")){
               a.updateLeftEnergy(energy);
             } else if( e.equals("r")) {
-                a.updateRigthEnergy(energy);
+                a.updateRightEnergy(energy);
               }
             }
             break;
@@ -208,16 +208,16 @@ public class Status{
       }
     }
     
-    public void chargeEnergy(String username, double energy){
+    public void chargeEnergy(String username, double le, double fe, double re){
       l.lock();
       try{
         Avatar a = null;
         for (Map.Entry<Player,Avatar> entry : online.entrySet()){
           if(entry.getKey().getUsername().equals(username)){
             a = entry.getValue();
-            a.updateFrontEnergy(energy);
-            a.updateLeftEnergy(energy);
-            a.updateRigthEnergy(energy);
+            a.updateFrontEnergy(fe);
+            a.updateLeftEnergy(le);
+            a.updateRightEnergy(re);
             break;
           }
         }

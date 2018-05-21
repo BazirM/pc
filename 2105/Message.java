@@ -78,9 +78,10 @@ public class Message extends Thread {
                 //state = login_window;
                }
                
+               //left front right
              if(token[0].equals("charge")){
-               //Username, Value of Energy(100)
-               st.chargeEnergy(token[1],Double.parseDouble(token[2]));
+               //Username, left front right
+               st.chargeEnergy(token[1],Double.parseDouble(token[2]),Double.parseDouble(token[3]),Double.parseDouble(token[4]));
              }
             }
         }

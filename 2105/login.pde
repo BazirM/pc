@@ -323,16 +323,16 @@ void showGame(){
       String PlayerName = "Nickname: ";
       String FrontEnergy = "Front Energy: ";
       String LeftEnergy = "Left Energy: ";
-      String RigthEnergy = "Rigth Energy: ";
+      String RightEnergy = "Right Energy: ";
       if(i==0){
         textSize(25);
         text(PlayerName,145-textWidth(PlayerName),space);
         textSize(25);
         text(FrontEnergy,180-textWidth(FrontEnergy),space+25);
         textSize(25);
-        text(RigthEnergy,180-textWidth(RigthEnergy),space+50);
+        text(RightEnergy,180-textWidth(RightEnergy),space+50);
         textSize(25);
-        text(LeftEnergy,180-textWidth(LeftEnergy),space+75);
+        text(LeftEnergy,170-textWidth(LeftEnergy),space+75);
         textSize(25);
         text(names[i],145,space);
         space+=25;
@@ -343,7 +343,7 @@ void showGame(){
         text(Double.toString(elem[0][7]),180,space);
         space+=25;
         textSize(25);
-        text(Double.toString(elem[0][6]),180,space);
+        text(Double.toString(elem[0][6]),170,space);
         space = 25;
       }
   }

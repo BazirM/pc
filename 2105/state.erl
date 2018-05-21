@@ -36,7 +36,7 @@ statelogin(Online,Socket,GreenMonsters,RedMonsters) ->
 % GreenMonsters #{I => Monster = ({Speed,X,Y,H,W,Type})}
 % RedMonsters
 state(Online,Socket,GreenMonsters,RedMonsters) ->
-	io:format("Estou no state ~n"),
+	%io:format("Estou no state ~n"),
 	receive
 		{online, add, Username} ->
 			{Speed, Dir, X, Y, H, W,Fe,Le,Re} = generateAvatar(),
@@ -69,6 +69,7 @@ state(Online,Socket,GreenMonsters,RedMonsters) ->
 							Data = "on_update_left " ++ Username ++ " " ++ float_to_list(Dir) ++ " " ++ integer_to_list(Le) ++ "\n",
 							[gen_tcp:send(Sock,list_to_binary(Data)) || Sock <- Socket]
 						end,
+					charge ! {left_energy,Username},
 					state(O,Socket,GreenMonsters,RedMonsters)
 			end;
 
@@ -83,11 +84,12 @@ state(Online,Socket,GreenMonsters,RedMonsters) ->
 							Data = "on_update_right " ++ Username ++ " " ++ float_to_list(Dir+10) ++ " " ++ integer_to_list(Re-5) ++ "\n",
 							[gen_tcp:send(Sock,list_to_binary(Data)) || Sock <- Socket];
 
-						0->
+						0 ->
 							O = maps:update(Username,{Speed, Dir, X, Y, H, W,Fe,Le,Re},Online),
 							Data = "on_update_right " ++ Username ++ " " ++ float_to_list(Dir) ++ " " ++ integer_to_list(Re) ++ "\n",
 							[gen_tcp:send(Sock,list_to_binary(Data)) || Sock <- Socket]
 						end,
+					charge ! {right_energy,Username},
 					state(O,Socket,GreenMonsters,RedMonsters)
 			end;
 
@@ -112,6 +114,7 @@ state(Online,Socket,GreenMonsters,RedMonsters) ->
 											Data = "on_update_front " ++ Username ++ " " ++ float_to_list(X) ++ " " ++ float_to_list(Y) ++ " " ++ integer_to_list(Fe) ++ "\n",
 											[gen_tcp:send(Sock,list_to_binary(Data)) || Sock <- Socket]
 									end,
+									charge ! {front_energy,Username},
 									state(O,Socket,GreenMonsters,RedMonsters);
 							{game_over, LostUsername} ->
 								Message = "game_over " ++ LostUsername ++ "\n",
@@ -119,6 +122,17 @@ state(Online,Socket,GreenMonsters,RedMonsters) ->
               					%Online,Socket,GreenMonsters,RedMonsters
               					state(#{},[],GreenMonsters,#{})
 						end
+			end;
+
+		{autocharge,Username,Energy} -> 
+			io:format("Estou no autocharge~n"),
+			case charge_time_energy(Username,Energy,Online) of
+				{failure} -> state(Online,Socket,GreenMonsters,RedMonsters);
+				{full} -> state(Online,Socket,GreenMonsters,RedMonsters);
+				{NewOnline,Message} ->
+					io:format("Atualize o meu online ~n"),
+					[gen_tcp:send(Sock,list_to_binary(Message)) || Sock <- Socket],
+					state(NewOnline,Socket,GreenMonsters,RedMonsters)
 			end;
 
 		{generate_monsters} ->
@@ -165,9 +179,10 @@ state(Online,Socket,GreenMonsters,RedMonsters) ->
               							NGM = maps:to_list(NewGreenMonsters),
               							[gen_tcp:send(Sock,list_to_binary("green_monster_upt " ++ integer_to_list(I) ++ " " ++ float_to_list(X) ++ " " 
                 						++ float_to_list(Y) ++ " " ++ integer_to_list(Type) ++ "\n")) || Sock <- Socket, {I,{Speed,X,Y,H,W,DirX,DirY,Type}} <- NGM],
-                						{USpeed, UDir, UX, UY, UH, UW, UFe} = maps:get(Username,Online),
-                						O = maps:update(Username,{USpeed, UDir, UX, UY, UH, UW, 100},Online),
-              							Data = "charge " ++ Username ++ " " ++ integer_to_list(100) ++ "\n",
+                						{USpeed, UDir, UX, UY, UH, UW, UFe, ULe, URe} = maps:get(Username,Online),
+                						O = maps:update(Username,{USpeed, UDir, UX, UY, UH, UW, 100, 100, 100},Online),
+                						Value = 100,
+              							Data = "charge " ++ Username ++ " " ++ integer_to_list(Value) ++ " " ++ integer_to_list(Value) ++ " " ++integer_to_list(Value) ++ "\n",
               							[gen_tcp:send(Sock,list_to_binary(Data)) || Sock <- Socket],
               							RemovedGreen = maps:remove(IM,NewGreenMonsters),
               							Data2 = "remove_green_monster " ++ integer_to_list(IM) ++ "\n",
@@ -273,3 +288,37 @@ check_collision_GreenMonsters([Head|T],Monsters) ->
 	end;
 check_collision_GreenMonsters([],Monsters) -> 
 	{game_upt_continue}.
+
+charge_time_energy(Username,Energy,Online) ->
+      case maps:is_key(Username,Online) of
+      	false -> {failure};
+      	true ->
+      		{Speed, Dir, X, Y, H, W,Fe,Le,Re} = maps:get(Username,Online),
+        case Energy of
+        	"Fe" ->
+          	if
+         	 Fe == 100 -> {full};
+          	 Fe < 100 -> 
+            	NewOnline = maps:update(Username,{Speed, Dir, X, Y, H, W,Fe+5,Le,Re},Online),
+            	Message = "charge " ++ Username ++ " " ++ integer_to_list(Le) ++ " " ++integer_to_list(Fe+5) ++ " " ++ integer_to_list(Re) ++ "\n",
+            	{NewOnline,Message}
+            end;
+            "Le" ->
+          	if
+         	 Le == 100 -> {full};
+          	 Le < 100 -> 
+            	NewOnline = maps:update(Username,{Speed, Dir, X, Y, H, W,Fe,Le+5,Re},Online),
+            	Message = "charge " ++ Username ++ " " ++ integer_to_list(Le+5) ++ " " ++integer_to_list(Fe) ++ " " ++ integer_to_list(Re) ++ "\n",
+            	{NewOnline,Message}
+            end;
+            "Re" ->
+          	if
+         	 Re == 100 -> {full};
+          	 Re < 100 -> 
+            	NewOnline = maps:update(Username,{Speed, Dir, X, Y, H, W,Fe,Le,Re+5},Online),
+            	Message = "charge " ++ Username ++ " " ++ integer_to_list(Le) ++ " " ++integer_to_list(Fe) ++ " " ++ integer_to_list(Re+5) ++ "\n",
+            	{NewOnline,Message}
+            end
+          end
+  	end.
+
