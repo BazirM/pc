@@ -1,7 +1,7 @@
 
 import java.lang.*;
 
-public class Player{
+public class Player implements Comparable<Player>{
     private String username;
     private double score;
     
@@ -31,13 +31,13 @@ public class Player{
       return "Player: " + username + " score: " + score +"\n";
     }
     
-    /*public int compareTo(Player j){
-      synchronized(j){
-        if(score > j.getscore()) return -1;
-        else if(score < j.getscore()) return 1;
+    public int compareTo(Player p){
+      synchronized(p){
+        if(score > p.getScore()) return -1;
+        else if(score < p.getScore()) return 1;
         else return 0;
       }
     }
-    */
+    
     
 }

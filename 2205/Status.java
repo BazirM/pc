@@ -20,6 +20,7 @@ public class Status{
       redmonsters = new HashMap<>();
       greenmonsters = new HashMap<>();
       boolean game_over = false;
+      rankingScore = new TreeSet();
     }
     
     public void addMonster(int i, Monster m){

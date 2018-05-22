@@ -350,6 +350,11 @@ void showGame(){
     }
   }
  
+ String[] ranking = st.RankingScoreTOP();
+ text("Score:",width-textWidth("Score:")-60,height/2-180);
+        for(int i = 0;i<ranking.length;i++,space +=20)
+          text(ranking[i],width-textWidth(ranking[i]),height/2-180+space);
+ //space = 25;
  //scores e reset do jogo
  if(st.game_over){
         double[][] score = st.playerPAtributes();
