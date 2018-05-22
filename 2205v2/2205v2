@@ -1,0 +1,2 @@
+								%Get do elemento do LostUsername e do WinnerUsername e fazer o max do score com o valor que tiver no map
+								%lá em cima, colocar no map o valor 0 num username (no ranking) quando este não existir (maps find der erro)
