@@ -37,7 +37,7 @@ statelogin(Online,Socket,GreenMonsters,RedMonsters,RankingScore) ->
   	[] -> none;
   	TopRanking ->
   	 [gen_tcp:send(Socket,list_to_binary("ranking_score " ++ Username ++ " " ++ integer_to_list(Score) ++ "\n"))
-                 || {Username,Score} <- RankingScore]
+                 || {Username,Score} <- TopRanking]
   end.
 %Online #{Username => Avatar = ({Speed,Dir,X,Y,H,W})}
 % GreenMonsters #{I => Monster = ({Speed,X,Y,H,W,Type})}
@@ -124,16 +124,17 @@ state(Online,Socket,GreenMonsters,RedMonsters,ScoreInGame,RankingScore) ->
 									end,
 									charge ! {front_energy,Username},
 									state(O,Socket,GreenMonsters,RedMonsters,ScoreInGame,RankingScore);
-							{game_over, Username} ->
+							{game_over, LostUsername} ->
 								{_,EndingTime,_} = os:timestamp(),
-								InitialTime = maps:get(Username,ScoreInGame),
+								InitialTime = maps:get(LostUsername,ScoreInGame),
 								Score = (EndingTime - InitialTime),
-								Data = "score " ++ Username ++ " " ++ integer_to_list(Score) ++ " " ++ integer_to_list(Score*2) ++ "\n",
+								Data = "score " ++ LostUsername ++ " " ++ integer_to_list(Score) ++ " " ++ integer_to_list(Score*2) ++ "\n",
 								[gen_tcp:send(Sock,list_to_binary(Data)) || Sock <- Socket],
 								%LostUsername LoserScore WinnerScore
-								Fun = fun(V) -> max(Score,V) end,
-								NewRankingScore = maps:update_with(Username,Fun,Score,RankingScore),
-								Message = "game_over " ++ Username ++ "\n",
+								%Fun = fun(V) -> max(Score,V) end,
+								%NewRankingScore = maps:update_with(LostUsername,Fun,Score,RankingScore),
+								NewRankingScore = maps:put(LostUsername,Score,RankingScore),
+								Message = "game_over " ++ LostUsername ++ "\n",
               					[gen_tcp:send(Sock,list_to_binary(Message)) || Sock <- Socket],
               					%Online,Socket,GreenMonsters,RedMonsters
               					state(#{},[],GreenMonsters,#{},#{},NewRankingScore)
@@ -224,8 +225,8 @@ state(Online,Socket,GreenMonsters,RedMonsters,ScoreInGame,RankingScore) ->
 								Data = "score " ++ Username ++ " " ++ integer_to_list(Score) ++ " " ++ integer_to_list(Score*2) ++ "\n",
 								[gen_tcp:send(Sock,list_to_binary(Data)) || Sock <- Socket],
 								%LostUsername LoserScore WinnerScore
-								Fun = fun(V) -> max(Score,V) end,
-								NewRankingScore = maps:update_with(Username,Fun,Score,RankingScore),
+								%Fun = fun(V) -> max(Score,V) end,
+								%NewRankingScore = maps:update_with(Username,Fun,Score,RankingScore),
 								Message = "game_over " ++ Username ++ "\n",
               					[gen_tcp:send(Sock,list_to_binary(Message)) || Sock <- Socket],
               					%Online,Socket,GreenMonsters,RedMonsters
