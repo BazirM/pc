@@ -12,7 +12,7 @@ public class Status{
     private Map<Integer,Monster> redmonsters;
     private Map<Integer,Monster> greenmonsters;
     private TreeSet<Player> rankingScore;
-    private TreeSet<Player> rankingLevel;
+    private TreeSet<Level> rankingLevel;
     private Lock l = new ReentrantLock();
     boolean game_over = false;
     
@@ -22,6 +22,7 @@ public class Status{
       greenmonsters = new HashMap<>();
       boolean game_over = false;
       rankingScore = new TreeSet();
+      rankingLevel = new TreeSet();
     }
     
     public void addMonster(int i, Monster m){
@@ -304,7 +305,7 @@ public class Status{
     public void rankingLevel(String username, int level){
       l.lock();
       try {
-        rankingLevel.add(new Player(username,level));
+        rankingLevel.add(new Level(username,level));
       }
       finally {
         l.unlock();
@@ -314,11 +315,11 @@ public class Status{
     public String[] RankingLevelTOP() {
       l.lock();
       int k = 0;
-      String[] players = new String[3];
+      String[] levels= new String[3];
       try {
-        for(Player p : rankingLevel){
+        for(Level lp : rankingLevel){
           if(k<3){
-          players[k++] = p.toString();
+          levels[k++] = lp.toString();
           }
           else
           break;
@@ -326,7 +327,7 @@ public class Status{
       }
       finally{
         l.unlock();
-        return players;
+        return levels;
       }
     }
       

@@ -2,7 +2,7 @@
 -export([start/0]).
 -import(avatar,[generateAvatar/0,generate_green_monsters/0,generate_red_monsters/0]).
 
-start() ->  %Online, Socket, GreenMonsters, RedMonsters, ScoreInGame
+start() ->  %Online, Socket, GreenMonsters, RedMonsters, ScoreInGame,RankingScore, RankingLevel
 	Pid = spawn(fun() -> state(#{},[],#{},#{},#{},#{}, #{}) end),
 	register(?MODULE,Pid).
 
@@ -79,7 +79,7 @@ state(Online,Socket,GreenMonsters,RedMonsters,ScoreInGame,RankingScore,RankingLe
 
 		{left,Username} ->
 			case maps:is_key(Username,Online) of
-				false -> state(Online,Socket,GreenMonsters,RedMonsters,ScoreInGame,RankingScore);
+				false -> state(Online,Socket,GreenMonsters,RedMonsters,ScoreInGame,RankingScore,RankingLevel);
 				true ->
 					{Speed, Dir, X, Y, H, W,Fe,Le,Re} = maps:get(Username,Online),
 					case Le of
@@ -169,12 +169,10 @@ state(Online,Socket,GreenMonsters,RedMonsters,ScoreInGame,RankingScore,RankingLe
 			end;
 
 		{autocharge,Username,Energy} -> 
-			io:format("Estou no autocharge~n"),
 			case charge_time_energy(Username,Energy,Online) of
 				{failure} -> state(Online,Socket,GreenMonsters,RedMonsters,ScoreInGame,RankingScore,RankingLevel);
 				{full} -> state(Online,Socket,GreenMonsters,RedMonsters,ScoreInGame,RankingScore,RankingLevel);
 				{NewOnline,Message} ->
-					io:format("Atualize o meu online ~n"),
 					[gen_tcp:send(Sock,list_to_binary(Message)) || Sock <- Socket],
 					state(NewOnline,Socket,GreenMonsters,RedMonsters,ScoreInGame,RankingScore,RankingLevel)
 			end;
@@ -268,10 +266,10 @@ state(Online,Socket,GreenMonsters,RedMonsters,ScoreInGame,RankingScore,RankingLe
 								%NewRankingScore2 = maps:update_with(WinnerUsername,fun(V) -> V+1 end,Score,NewRankingScore),
 								NewRankingScore2 = maps:update(WinnerUsername,TOPWinner,NewRankingScore),
 
-								LL = maps:get(LostUsername,RankingLevel),
+								LL = maps:get(Username,RankingLevel),
 								WL = maps:get(WinnerUsername,RankingLevel),
 
-								NewRankingLevel = maps:update(LostUsername, LL, RankingLevel),
+								NewRankingLevel = maps:update(Username, LL, RankingLevel),
 								NewRankingLevel2 = maps:update(WinnerUsername, WL+1, NewRankingLevel),
 
 
