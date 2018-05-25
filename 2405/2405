@@ -27,3 +27,47 @@
 			end;
 		{game_over} ->
 			%%atualizar níveis, colocar os jogadores do jogo (que teve game_over) na lista de espera
+
+
+=======
+
+NEW UPDATE
+waiting(WaitingList, Levels) ->
+	receive 
+        {enter_waiting_list, Username, Pid} ->
+          case maps:find(Username,Levels) of
+            error -> 
+              NewLevels = maps:put(Username,1,Levels),
+              NewWaitingList = [{U, Pid} | WaitingList],
+              case match_making(NewWaitingList, NewLevels) of
+					{match, Pid1, Pid2} -> 
+						Pid1 ! ready,
+						Pid2 ! ready,
+						User1 = hd([Usern || {Usern, Pid} <- NewWaitingList, Pid == Pid1]),
+						User2 = hd([Usern || {Usern, Pid} <- NewWaitingList, Pid == Pid2]),
+						RemovedWaitingList1 = [NewWaitingList -- [{User1, Pid1}]]
+						RemovedWaitingList2 = [RemovedWaitingList1 -- [{User2, Pid2}]],
+						waiting(RemovedWaitingList2,NewLevels);
+					fail -> %falhou match making
+						waiting(NewWaitingList, NewLevels)
+			  end;
+           
+            _ ->
+            	NewWaitingList = [{U, Pid} | WaitingList],
+              case match_making(NewWaitingList, Levels) of
+					{match, Pid1, Pid2} -> 
+						Pid1 ! ready,
+						Pid2 ! ready,
+						User1 = hd([Usern || {Usern, Pid} <- NewWaitingList, Pid == Pid1]),
+						User2 = hd([Usern || {Usern, Pid} <- NewWaitingList, Pid == Pid2]),
+						RemovedWaitingList1 = [NewWaitingList -- [{User1, Pid1}]]
+						RemovedWaitingList2 = [RemovedWaitingList1 -- [{User2, Pid2}]],
+						waiting(RemovedWaitingList2,Levels);
+					fail ->
+						waiting(NewWaitingList,Levels)
+				 end
+			end;
+
+			{game_over, UpdatedLevels} ->
+					waiting(WaitingList,UpdatedLevels)
+		end.
