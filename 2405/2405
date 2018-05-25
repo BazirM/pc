@@ -1,1 +1,29 @@
 
+      %colocar posiçao na fila na waitinglist para não haver casos de starvation (um int, o valor colocado quando é criado um elem na fila é o num maior de entre os elems +1)
+	  waiting(WaitingList, Levels) ->
+      receive 
+        {enter_waiting_list, Username, Pid} ->
+		
+		
+%          case maps:find(Username,Levels) of
+%            error -> 
+%              NewLevels = maps:put(Username,1,Levels);
+%			end,
+%colocar no mapa enquanto faz o teste sem perder referencia ao novo mapa
+		  
+		  
+          NewWaitingList = [{U, Pid} | WaitingList],
+		  case match_making(NewWaitingList, NewLevels) of
+			{match, Pid1, Pid2} -> 
+				Pid1 ! ready,
+				Pid2 ! ready,
+				User1 = hd([Usern || {Usern, Pid} <- NewWaitingList, Pid == Pid1]),
+				User2 = hd([Usern || {Usern, Pid} <- NewWaitingList, Pid == Pid2]),
+				RemovedWaitingList1 = [NewWaitingList -- [{User1, Pid1}]]
+				RemovedWaitingList2 = [RemovedWaitingList1 -- [{User2, Pid2}]],
+				waiting(RemovedWaitingList2, 
+			_ ->
+				waiting(NewWaitingList, Levels)
+			end;
+		{game_over} ->
+			%%atualizar níveis, colocar os jogadores do jogo (que teve game_over) na lista de espera
