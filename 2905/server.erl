@@ -29,7 +29,7 @@ room(Sockets) ->
         {enter, Socket} ->
             io:format("user entered ~p ~n", [Socket]),
             room([Socket | Sockets]);
-        {line, Data,Socket} ->
+        {line, Data,_} ->
             io:format("received ~p~n", [Data]),
             %[Pid ! {line,Data} || Pid <- Pids],
             room(Sockets);
@@ -51,7 +51,7 @@ user(Sock, Room) ->
              St = string:tokens(Dados, " "),
              [U | P] = St,
              case loginmanager:login(U, P, Socket) of
-              {ok,N} -> gen_tcp:send(Socket,<<"ok_login\n">>),
+              {ok,_} -> gen_tcp:send(Socket,<<"ok_login\n">>),
                   Room ! {enter,Socket},
 
                   wait ! {enter_waiting_list, U, self()},
@@ -78,7 +78,7 @@ user(Sock, Room) ->
             io:format("St: ~p ~n",[St]),
             [U | P] = St,
             case loginmanager:create_account(U, P, Socket) of
-              {ok,N} -> gen_tcp:send(Socket,<<"ok_create_account\n">>);
+              {ok,_} -> gen_tcp:send(Socket,<<"ok_create_account\n">>);
               _ -> io:format("Erro a criar conta"),
               gen_tcp:send(Socket,<<"user_exists\n">>)
             end;
@@ -228,8 +228,8 @@ waiting(WaitingList, Levels, NumGameRoom) ->
                   Pid2 ! {ready,GameRoom},
                   ?MODULE ! {generate_monsters, GameRoom},
                   spawn(fun() -> update_monsters(GameRoom) end),
-                  User1 = hd([Usern || {Usern, Pid} <- NewWaitingList, Pid == Pid1]),
-                  User2 = hd([Usern || {Usern, Pid} <- NewWaitingList, Pid == Pid2]),
+                  User1 = hd([Usern || {Usern, _} <- NewWaitingList, Pid == Pid1]),
+                  User2 = hd([Usern || {Usern, _} <- NewWaitingList, Pid == Pid2]),
                   %RemovedWaitingList1 = [NewWaitingList -- [{User1, Pid1}]],
                   %RemovedWaitingList2 = [RemovedWaitingList1 -- [{User2, Pid2}]],
                   RemovedWaitingList1 = lists:delete({User1, Pid1}, NewWaitingList),
@@ -249,8 +249,8 @@ waiting(WaitingList, Levels, NumGameRoom) ->
                   ?MODULE ! {generate_monsters, GameRoom},
                   spawn(fun() -> update_monsters(GameRoom) end),
                   %spawn(fun() -> charge_energy(GameRoom) end),
-                  User1 = hd([Usern || {Usern, Pid} <- NewWaitingList, Pid == Pid1]),
-                  User2 = hd([Usern || {Usern, Pid} <- NewWaitingList, Pid == Pid2]),
+                  User1 = hd([Usern || {Usern, _} <- NewWaitingList, Pid == Pid1]),
+                  User2 = hd([Usern || {Usern, _} <- NewWaitingList, Pid == Pid2]),
                   RemovedWaitingList1 = lists:delete({User1, Pid1}, NewWaitingList),
                   RemovedWaitingList2 = lists:delete({User2, Pid2}, RemovedWaitingList1),
                   io:format("User1: ~p ; User2: ~p ; RemovedWaitingList1: ~p ; RemovedWaitingList2: ~p ~n",[User1, User2, RemovedWaitingList1, RemovedWaitingList2]),

@@ -59,7 +59,7 @@ find_by_value(Value, Map) ->
 
 management(Users,Onlines) ->
 	receive
-		{create,Username,Passwd,From,Socket} ->
+		{create,Username,Passwd,From,_} ->
 			case maps:find(Username,Users) of
 				error -> From ! {?MODULE,ok, maps:size(Onlines)},
 					U = maps:put(Username,{Passwd,false},Users),
@@ -67,7 +67,7 @@ management(Users,Onlines) ->
 				_ -> From ! {?MODULE,user_exists}, management(Users,Onlines)
 				
 			end;
-		{close,Username,Passwd,From,Socket} ->
+		{close,Username,Passwd,From,_} ->
 			case maps:find(Username,Users) of
 				{ok,{Passwd,_}} -> From ! {?MODULE,ok},
 									O = maps:remove(Username,Onlines),
@@ -85,7 +85,7 @@ management(Users,Onlines) ->
 				_ -> From ! {?MODULE,invalid},
 					management(Users,Onlines)
 			end;
-		{logout,Username,Passwd,From,Socket} ->
+		{logout,Username,Passwd,From,_} ->
 			case maps:find(Username,Users) of
 				{ok,{Passwd,true}} -> From ! {?MODULE,ok},
 									O = maps:remove(Username,Onlines),

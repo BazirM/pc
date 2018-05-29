@@ -25,7 +25,7 @@ statelogin(Online,Socket,GreenMonsters,RedMonsters) ->
   	GM ->
   		[gen_tcp:send(Socket,list_to_binary("add_green_monster " ++ integer_to_list(I) ++ " " ++ integer_to_list(Speed) ++ " " ++ float_to_list(X) 
                 ++ " " ++ float_to_list(Y) ++ " " ++ float_to_list(H) ++ " " ++ float_to_list(W) ++ " " ++ integer_to_list(Type) ++ "\n"))
-                 || {I,{Speed,X,Y,H,W,DirX,DirY,Type}} <- GM]
+                 || {I,{Speed,X,Y,H,W,_,_,Type}} <- GM]
     end,
 
   case maps:to_list(RedMonsters) of
@@ -33,7 +33,7 @@ statelogin(Online,Socket,GreenMonsters,RedMonsters) ->
   	RM ->
   		[gen_tcp:send(Socket,list_to_binary("add_red_monster " ++ integer_to_list(I) ++ " " ++ integer_to_list(Speed) ++ " " ++ float_to_list(X) 
                 ++ " " ++ float_to_list(Y) ++ " " ++ float_to_list(H) ++ " " ++ float_to_list(W) ++ " " ++ integer_to_list(Type) ++ "\n"))
-                 || {I,{Speed,X,Y,H,W,DirX,DirY,Type}} <- RM]
+                 || {I,{Speed,X,Y,H,W,_,_,Type}} <- RM]
     end.
 
 %Online #{Username => Avatar = ({Speed,Dir,X,Y,H,W})}
@@ -128,7 +128,7 @@ state(NumGameRoom,Online,Socket,GreenMonsters,RedMonsters,ScoreInGame) ->
 								Score = EndingTime - InitialTime,
 								Data = "score " ++ LostUsername ++ " " ++ integer_to_list(Score) ++ " " ++ integer_to_list(Score*2) ++ "\n",
 								[gen_tcp:send(Sock,list_to_binary(Data)) || Sock <- Socket],
-								WinnerUsername = hd([WinnerU || {WinnerU, {Speed, Dir, X, Y, H, W, Fe ,Le ,Re}} <- maps:to_list(Online), WinnerU /= LostUsername]),
+								WinnerUsername = hd([WinnerU || {WinnerU, {_,_,_,_,_,_,_,_,_}} <- maps:to_list(Online), WinnerU /= LostUsername]),
 								Message = "game_over " ++ LostUsername ++ "\n",
 				              	[gen_tcp:send(Sock,list_to_binary(Message)) || Sock <- Socket],
                  				ranking ! {game_over_add_score, LostUsername, WinnerUsername, Score, Score*2},
@@ -167,7 +167,7 @@ state(NumGameRoom,Online,Socket,GreenMonsters,RedMonsters,ScoreInGame) ->
 				register(notifyRed, NotifyRed),
 				state(NumGameRoom,Online,Socket,GM2,RM,ScoreInGame);
 
-		{red_create, From} ->
+		{red_create,_} ->
 			{Speed, X, Y, H, W,DirX,DirY, Type} = generate_red_monsters(),
 			Id = maps:size(RedMonsters)+1,
 			io:format("ID incrementado: ~p ~n",[Id]),
@@ -189,20 +189,20 @@ state(NumGameRoom,Online,Socket,GreenMonsters,RedMonsters,ScoreInGame) ->
 					{game_upt_continue} -> 
               					NRM = maps:to_list(NewRedMonsters),
               					[gen_tcp:send(Sock,list_to_binary("red_monster_upt " ++ integer_to_list(I) ++ " " ++ float_to_list(X) ++ " " 
-                ++ float_to_list(Y) ++ " " ++ integer_to_list(Type) ++ "\n")) || Sock <- Socket, {I,{Speed,X,Y,H,W,DirX,DirY,Type}} <- NRM],
+                ++ float_to_list(Y) ++ " " ++ integer_to_list(Type) ++ "\n")) || Sock <- Socket, {I,{_,X,Y,_,_,_,_,Type}} <- NRM],
               					case check_collision_GreenMonsters(maps:to_list(Online),GreenMonsters) of 
               						{game_upt_continue} -> 
               							NGM = maps:to_list(NewGreenMonsters),
               							[gen_tcp:send(Sock,list_to_binary("green_monster_upt " ++ integer_to_list(I) ++ " " ++ float_to_list(X) ++ " " 
-               							 ++ float_to_list(Y) ++ " " ++ integer_to_list(Type) ++ "\n")) || Sock <- Socket, {I,{Speed,X,Y,H,W,DirX,DirY,Type}} <- NGM],
+               							 ++ float_to_list(Y) ++ " " ++ integer_to_list(Type) ++ "\n")) || Sock <- Socket, {I,{_,X,Y,_,_,_,_,Type}} <- NGM],
               							From ! {repeat},
               							state(NumGameRoom,Online,Socket,NewGreenMonsters,NewRedMonsters,ScoreInGame);
               						
               						{charge,Username,IM} ->
               							NGM = maps:to_list(NewGreenMonsters),
               							[gen_tcp:send(Sock,list_to_binary("green_monster_upt " ++ integer_to_list(I) ++ " " ++ float_to_list(X) ++ " " 
-                						++ float_to_list(Y) ++ " " ++ integer_to_list(Type) ++ "\n")) || Sock <- Socket, {I,{Speed,X,Y,H,W,DirX,DirY,Type}} <- NGM],
-                						{USpeed, UDir, UX, UY, UH, UW, UFe, ULe, URe} = maps:get(Username,Online),
+                						++ float_to_list(Y) ++ " " ++ integer_to_list(Type) ++ "\n")) || Sock <- Socket, {I,{_,X,Y,_,_,_,_,Type}} <- NGM],
+                						{USpeed, UDir, UX, UY, UH, UW,_,_,_} = maps:get(Username,Online),
                 						O = maps:update(Username,{USpeed, UDir, UX, UY, UH, UW, 100, 100, 100},Online),
                 						Value = 100,
               							Data = "charge " ++ Username ++ " " ++ integer_to_list(Value) ++ " " ++ integer_to_list(Value) ++ " " ++integer_to_list(Value) ++ "\n",
@@ -230,7 +230,7 @@ state(NumGameRoom,Online,Socket,GreenMonsters,RedMonsters,ScoreInGame) ->
 								Score = EndingTime - InitialTime,
 								Data = "score " ++ Username ++ " " ++ integer_to_list(Score) ++ " " ++ integer_to_list(Score*2) ++ "\n",
 								[gen_tcp:send(Sock,list_to_binary(Data)) || Sock <- Socket],
-								WinnerUsername = hd([WinnerU || {WinnerU, {Speed, Dir, X, Y, H, W, Fe ,Le ,Re}} <- maps:to_list(Online), WinnerU /= Username]),
+								WinnerUsername = hd([WinnerU || {WinnerU, {_,_,_,_,_,_,_,_,_}} <- maps:to_list(Online), WinnerU /= Username]),
 								Message = "game_over " ++ Username ++ "\n",
 								wait ! {game_over, WinnerUsername},
 								[gen_tcp:send(Sock,list_to_binary(Message)) || Sock <- Socket],
@@ -286,7 +286,7 @@ check_boundaries_monsters(_,Monsters,0) ->
 
 
 check_boundaries_players([Head|T]) ->
-	{Username,{Speed,Dir,X,Y,H,W,Fe,Le,Re}} = Head,
+	{Username,{_,_,X,Y,H,W,_,_,_}} = Head,
 	if X > 1024-(W/2) ; X < W/2 ->
 		{game_over,Username};
 	Y > 700-(H/2) ; Y < H/2 ->
@@ -303,9 +303,9 @@ distance(X1,Y1,X2,Y2) ->
 
 %Lista de Online, Map de Monsters, N é o numero de monstros no map
 check_collision_RedMonsters([Head|T],Monsters) ->
-	{Username,{Speed, Dir, XU, YU, HU, WU,Fe,Le,Re}} = Head,
+	{Username,{_,_, XU, YU, HU,_,_,_,_}} = Head,
 	%lista das distancias entre o avatar (Head) e cada um dos monstros
-	Distances = [{distance(XU,YU,X2,Y2),H} || {I,{Speed,X2,Y2,H,W,DirX,DirY,Type}} <- maps:to_list(Monsters)],
+	Distances = [{distance(XU,YU,X2,Y2),H} || {_,{_,X2,Y2,H,_,_,_,_}} <- maps:to_list(Monsters)],
 	%para verificar se houve alguma distancia que falhe a condicao
 	TestDistances = [ {Val,H} ||  {Val,H} <- Distances , Val < ((HU/2) + (H/2))],
 	case lists:flatlength(TestDistances) of
@@ -314,23 +314,23 @@ check_collision_RedMonsters([Head|T],Monsters) ->
 	    0 ->
 			check_collision_RedMonsters(T,Monsters)
 	end;
-check_collision_RedMonsters([],Monsters) -> 
+check_collision_RedMonsters([],_) -> 
 	{game_upt_continue}.
 
 check_collision_GreenMonsters([Head|T],Monsters) ->
-	{Username,{Speed, Dir, XU, YU, HU, WU,Fe,Le,Re}} = Head,
+	{Username,{_,_, XU, YU, HU,_,_,_,_}} = Head,
 	%lista das distancias entre o avatar (Head) e cada um dos monstros
-	Distances = [{distance(XU,YU,X2,Y2),H,I} || {I,{Speed,X2,Y2,H,W,DirX,DirY,Type}} <- maps:to_list(Monsters)],
+	Distances = [{distance(XU,YU,X2,Y2),H,I} || {I,{_,X2,Y2,H,_,_,_,_}} <- maps:to_list(Monsters)],
 	%para verificar se houve alguma distancia que falhe a condicao
 	TestDistances = [ {Val,H,I} ||  {Val,H,I} <- Distances , Val < ((HU/2) + (H/2))],
 	case lists:flatlength(TestDistances) of
 		N when N > 0 -> 
-			{ValM,HM,IM} = hd(TestDistances), %para poder saber o ID do monstro que colidiu com o utilizador
+			{_,_,IM} = hd(TestDistances), %para poder saber o ID do monstro que colidiu com o utilizador
 			{charge,Username,IM};
 	    0 ->
 			check_collision_GreenMonsters(T,Monsters)
 	end;
-check_collision_GreenMonsters([],Monsters) -> 
+check_collision_GreenMonsters([],_) -> 
 	{game_upt_continue}.
 
 charge_time_energy(Username,Energy,Online) ->
